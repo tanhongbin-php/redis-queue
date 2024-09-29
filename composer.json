@@ -1,0 +1,13 @@
+{
+  "name": "thb/redis",
+  "type": "library",
+  "license": "MIT",
+  "description": "Webman plugin thb/redis",
+  "require": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Thb\\Redis\\": "src"
+    }
+  }
+}
