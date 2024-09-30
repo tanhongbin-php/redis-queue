@@ -14,7 +14,7 @@
 namespace Thb\Redis;
 
 use support\Log;
-use Workerman\RedisQueue\Client as RedisClient;
+use Thb\Redis\RedisClient;
 
 /**
  * Class RedisQueue
