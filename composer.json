@@ -4,6 +4,7 @@
   "license": "MIT",
   "description": "Webman plugin thb/redis",
   "require": {
+    "workerman/redis-queue": "^1.2"
   },
   "autoload": {
     "psr-4": {
