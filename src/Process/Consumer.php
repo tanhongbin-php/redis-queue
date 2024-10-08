@@ -48,39 +48,31 @@ class Consumer
      */
     public function onWorkerStart()
     {
-        if (!is_dir($this->_consumerDir)) {
+        if (!file_exists($this->_consumerDir)) {
             echo "Consumer directory {$this->_consumerDir} not exists\r\n";
-            return;
+            return false;
         }
-        $dir_iterator = new \RecursiveDirectoryIterator($this->_consumerDir);
-        $iterator = new \RecursiveIteratorIterator($dir_iterator);
-        foreach ($iterator as $file) {
-            if (is_dir($file)) {
-                continue;
-            }
-            $fileinfo = new \SplFileInfo($file);
-            $ext = $fileinfo->getExtension();
-            if ($ext === 'php') {
-                $class = str_replace('/', "\\", substr(substr($file, strlen(base_path())), 0, -4));
-                if (is_a($class, 'Thb\Redis\Consumer', true)) {
-                    $consumer = Container::get($class);
-                    $connection_name = $consumer->connection ?? 'default';
-                    $queue = $consumer->queue;
-                    if (!$queue) {
-                        echo "Consumer {$class} queue not exists\r\n";
-                        continue;
-                    }
-                    $this->_consumers[$queue] = $consumer;
-                    $connection = Client::connection($connection_name);
-                    $connection->subscribe($queue, [$consumer, 'consume']);
-                    if (method_exists($connection, 'onConsumeFailure')) {
-                        $connection->onConsumeFailure(function ($exeption, $package) {
-                            $consumer = $this->_consumers[$package['queue']] ?? null;
-                            if ($consumer && method_exists($consumer, 'onConsumeFailure')) {
-                                return call_user_func([$consumer, 'onConsumeFailure'], $exeption, $package);
-                            }
-                        });
-                    }
+        $fileinfo = new \SplFileInfo($this->_consumerDir);
+        $ext = $fileinfo->getExtension();
+        if ($ext === 'php') {
+            $class = str_replace('/', "\\", substr(substr($this->_consumerDir, strlen(base_path())), 0, -4));
+            if (is_a($class, 'Thb\Redis\Consumer', true)) {
+                $consumer = Container::get($class);
+                $connection_name = $consumer->connection ?? 'default';
+                $queue = $consumer->queue;
+                if (!$queue) {
+                    echo "Consumer {$class} queue not exists\r\n";
+                    return false;
+                }
+                $connection = Client::connection($connection_name);
+                $connection->subscribe($queue, [$consumer, 'consume']);
+                if (method_exists($connection, 'onConsumeFailure')) {
+                    $connection->onConsumeFailure(function ($exeption, $package) {
+                        $consumer = $consumer ?? null;
+                        if ($consumer && method_exists($consumer, 'onConsumeFailure')) {
+                            return call_user_func([$consumer, 'onConsumeFailure'], $exeption, $package);
+                        }
+                    });
                 }
             }
         }
