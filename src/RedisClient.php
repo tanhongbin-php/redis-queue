@@ -16,6 +16,7 @@
 namespace Thb\Redis;
 
 use RuntimeException;
+use support\exception\BusinessException;
 use Webman\Event\Event;
 use Workerman\Timer;
 use Workerman\Redis\Client as Redis;
@@ -244,24 +245,28 @@ class RedisClient
                             Event::emit('queue.dbListen', $package);
                             \call_user_func($callback, $package['data']);
                             Event::emit('queue.log', ['type' => 'redis']);
-                        } catch (\Throwable $e) {
-                            $this->log((string)$e);
+                        } catch (BusinessException $exception) {
                             $package['max_attempts'] = $this->_options['max_attempts'];
-                            $package['error'] = $e->getMessage();
+                            $package['error'] = ['errMessage'=>$exception->getMessage(),'errCode'=>$exception->getCode()];
                             $package['type'] = 'redis';
-                            $package_modified = null;
                             if ($this->_consumeFailure) {
                                 try {
-                                    $package_modified = \call_user_func($this->_consumeFailure, $e, $package);
+                                    \call_user_func($this->_consumeFailure, $exception, $package);
                                 } catch (\Throwable $ta) {
                                     $this->log((string)$ta);
                                 }
                             }
-                            if (is_array($package_modified)) {
-                                $package['data'] = $package_modified['data'] ?? $package['data'];
-                                $package['attempts'] = $package_modified['attempts'] ?? $package['attempts'];
-                                $package['max_attempts'] = $package_modified['max_attempts'] ?? $package['max_attempts'];
-                                $package['error'] = $package_modified['error'] ?? $package['error'];
+                        } catch (\Throwable $e) {
+                            $this->log((string)$e);
+                            $package['max_attempts'] = $this->_options['max_attempts'];
+                            $package['error'] = ['errMessage'=>$e->getMessage(),'errCode'=>$e->getCode(),'errFile'=>$e->getFile(),'errLine'=>$e->getLine()];
+                            $package['type'] = 'redis';
+                            if ($this->_consumeFailure) {
+                                try {
+                                    \call_user_func($this->_consumeFailure, $e, $package);
+                                } catch (\Throwable $ta) {
+                                    $this->log((string)$ta);
+                                }
                             }
                             if (++$package['attempts'] > $package['max_attempts']) {
                                 $this->fail($package);
