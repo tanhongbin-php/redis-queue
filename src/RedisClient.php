@@ -241,16 +241,14 @@ class RedisClient
                         $this->_redisSend->rPush($redis_key, $package_str);
                     } else {
                         $callback = $this->_subscribeQueues[$redis_key];
+                        Event::emit('queue.dbListen', $package);
                         try {
-                            Event::emit('queue.dbListen', $package);
-                            \call_user_func($callback, $package['data']);
-                            Event::emit('queue.log', ['type' => 'redis']);
+                            $res = \call_user_func($callback, $package['data']);
+                            Event::emit('queue.log', ['type' => 'redis', 'queue_return' => $res]);
                         } catch (BusinessException $exception) {
                             $package['max_attempts'] = $this->_options['max_attempts'];
-                            $package['error'] = ['errMessage'=>$exception->getMessage(),'errCode'=>$exception->getCode()];
-                            $package['type'] = 'redis';
                             try {
-                                Event::emit('queue.exCep', $package);
+                                Event::emit('queue.log', ['type' => 'redis', 'queue_return' => ['code'=>$exception->getCode(),'msg'=>$exception->getMessage()]]);
                             } catch (\Throwable $ta) {
                                 $this->log((string)$ta);
                             }

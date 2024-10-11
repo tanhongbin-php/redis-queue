@@ -21,5 +21,5 @@ namespace Thb\Redis;
  */
 interface Consumer
 {
-    public function consume($data);
+    public function consume(array $data);
 }
