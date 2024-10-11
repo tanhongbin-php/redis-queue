@@ -249,24 +249,20 @@ class RedisClient
                             $package['max_attempts'] = $this->_options['max_attempts'];
                             $package['error'] = ['errMessage'=>$exception->getMessage(),'errCode'=>$exception->getCode()];
                             $package['type'] = 'redis';
-                            if ($this->_consumeFailure) {
-                                try {
-                                    \call_user_func($this->_consumeFailure, $exception, $package);
-                                } catch (\Throwable $ta) {
-                                    $this->log((string)$ta);
-                                }
+                            try {
+                                Event::emit('queue.exCep', $package);
+                            } catch (\Throwable $ta) {
+                                $this->log((string)$ta);
                             }
                         } catch (\Throwable $e) {
                             $this->log((string)$e);
                             $package['max_attempts'] = $this->_options['max_attempts'];
                             $package['error'] = ['errMessage'=>$e->getMessage(),'errCode'=>$e->getCode(),'errFile'=>$e->getFile(),'errLine'=>$e->getLine()];
                             $package['type'] = 'redis';
-                            if ($this->_consumeFailure) {
-                                try {
-                                    \call_user_func($this->_consumeFailure, $e, $package);
-                                } catch (\Throwable $ta) {
-                                    $this->log((string)$ta);
-                                }
+                            try {
+                                Event::emit('queue.exCep', $package);
+                            } catch (\Throwable $ta) {
+                                $this->log((string)$ta);
                             }
                             if (++$package['attempts'] > $package['max_attempts']) {
                                 $this->fail($package);
