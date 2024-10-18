@@ -65,6 +65,10 @@ class Consumer
                     return false;
                 }
                 $connection = Client::connection($connection_name);
+                $middleware = config('plugin.thb.redis.redis.' . $connection_name . '.middleware', []);
+                $selfMiddleware = $consumer->middleware ?? [];
+                $middleware = array_merge($middleware, $selfMiddleware);
+                $connection->middleware = $middleware;
                 $connection->subscribe($queue, [$consumer, 'consume']);
                 if (method_exists($connection, 'onConsumeFailure')) {
                     $connection->onConsumeFailure(function ($exeption, $package) {

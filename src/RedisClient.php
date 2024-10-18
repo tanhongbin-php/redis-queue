@@ -16,8 +16,8 @@
 namespace Thb\Redis;
 
 use RuntimeException;
+use support\Container;
 use support\exception\BusinessException;
-use Webman\Event\Event;
 use Workerman\Timer;
 use Workerman\Redis\Client as Redis;
 use Psr\Log\LoggerInterface;
@@ -79,6 +79,10 @@ class RedisClient
         'db'            => 0,
         'prefix'        => '',
     ];
+
+    public $middleware = [];
+
+    public $middlewareArr = [];
 
     /**
      * Client constructor.
@@ -241,32 +245,42 @@ class RedisClient
                         $this->_redisSend->rPush($redis_key, $package_str);
                     } else {
                         $callback = $this->_subscribeQueues[$redis_key];
-                        Event::emit('queue.dbListen', $package);
                         try {
-                            $res = \call_user_func($callback, $package['data']);
-                            Event::emit('queue.log', ['type' => 'redis', 'queue_return' => $res]);
-                        } catch (BusinessException $exception) {
-                            $package['max_attempts'] = $this->_options['max_attempts'];
-                            try {
-                                Event::emit('queue.log', ['type' => 'redis', 'queue_return' => ['code'=>$exception->getCode(),'msg'=>$exception->getMessage()]]);
-                            } catch (\Throwable $ta) {
-                                $this->log((string)$ta);
+                            // 使用示例
+                            $redisMidd = Container::get('Thb\Redis\Redislication');
+
+                            foreach ($this->middleware as $middleware) {
+                                if(!class_exists($middleware)){
+                                    continue;
+                                }
+                                if (isset($this->middlewaresArr[$middleware])) {
+                                    continue;
+                                }
+                                $this->middlewaresArr[$middleware] = $middleware; // 缓存中间件类实例，避免重复初始化
+                                $redisMidd->use(new $middleware); // 添加中间件
                             }
+                            $package['max_attempts'] = $this->_options['max_attempts'];
+                            $redisMidd->handle($package, function() use($callback, $package) {
+                                try {
+                                    return \call_user_func($callback, $package['data']);
+                                } catch (BusinessException $exception) {
+                                    return ['code' => $exception->getCode(), 'msg' => $exception->getMessage()];
+                                } catch (\Throwable $exception) {
+                                    $this->log((string)$e);
+                                    $package['error'] = ['errMessage'=>$e->getMessage(),'errCode'=>$e->getCode(),'errFile'=>$e->getFile(),'errLine'=>$e->getLine()];
+                                    if (++$package['attempts'] > $package['max_attempts']) {
+                                        $this->fail($package);
+                                    } else {
+                                        $this->retry($package);
+                                    }
+                                    return ['code' => 500, 'msg' => ['errMessage'=>$exception->getMessage(), 'errCode'=>$exception->getCode(), 'errFile'=>$exception->getFile(), 'errLine'=>$exception->getLine()]];
+                                }
+                            });
+                            
                         } catch (\Throwable $e) {
                             $this->log((string)$e);
-                            $package['max_attempts'] = $this->_options['max_attempts'];
                             $package['error'] = ['errMessage'=>$e->getMessage(),'errCode'=>$e->getCode(),'errFile'=>$e->getFile(),'errLine'=>$e->getLine()];
-                            $package['type'] = 'redis';
-                            try {
-                                Event::emit('queue.exCep', $package);
-                            } catch (\Throwable $ta) {
-                                $this->log((string)$ta);
-                            }
-                            if (++$package['attempts'] > $package['max_attempts']) {
-                                $this->fail($package);
-                            } else {
-                                $this->retry($package);
-                            }
+                            $this->fail($package);
                         }
                     }
                 }
