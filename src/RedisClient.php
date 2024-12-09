@@ -266,8 +266,8 @@ class RedisClient
                                 } catch (BusinessException $exception) {
                                     return ['code' => $exception->getCode(), 'msg' => $exception->getMessage()];
                                 } catch (\Throwable $exception) {
-                                    $this->log((string)$e);
-                                    $package['error'] = ['errMessage'=>$e->getMessage(),'errCode'=>$e->getCode(),'errFile'=>$e->getFile(),'errLine'=>$e->getLine()];
+                                    $this->log((string)$exception);
+                                    $package['error'] = ['errMessage'=>$exception->getMessage(),'errCode'=>$exception->getCode(),'errFile'=>$exception->getFile(),'errLine'=>$exception->getLine()];
                                     if (++$package['attempts'] > $package['max_attempts']) {
                                         $this->fail($package);
                                     } else {
