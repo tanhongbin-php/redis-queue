@@ -263,17 +263,8 @@ class RedisClient
                             $redisMidd->handle($package, function() use($callback, $package) {
                                 try {
                                     return \call_user_func($callback, $package['data']);
-                                } catch (BusinessException $exception) {
-                                    return ['code' => $exception->getCode(), 'msg' => $exception->getMessage()];
                                 } catch (\Throwable $exception) {
-                                    $this->log((string)$exception);
-                                    $package['error'] = ['errMessage'=>$exception->getMessage(),'errCode'=>$exception->getCode(),'errFile'=>$exception->getFile(),'errLine'=>$exception->getLine()];
-                                    if (++$package['attempts'] > $package['max_attempts']) {
-                                        $this->fail($package);
-                                    } else {
-                                        $this->retry($package);
-                                    }
-                                    return ['code' => 500, 'msg' => ['errMessage'=>$exception->getMessage(), 'errCode'=>$exception->getCode(), 'errFile'=>$exception->getFile(), 'errLine'=>$exception->getLine()]];
+                                    return $exception;
                                 }
                             });
                             
