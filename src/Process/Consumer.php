@@ -40,6 +40,7 @@ class Consumer
      */
     public function __construct($consumer_dir = '')
     {
+        \support\Context::init();
         $this->_consumerDir = $consumer_dir;
     }
 

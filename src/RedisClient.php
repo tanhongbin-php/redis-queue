@@ -17,7 +17,6 @@ namespace Thb\Redis;
 
 use RuntimeException;
 use support\Container;
-use support\exception\BusinessException;
 use Workerman\Timer;
 use Workerman\Redis\Client as Redis;
 use Psr\Log\LoggerInterface;
