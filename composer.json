@@ -6,7 +6,6 @@
   "require": {
     "php": ">=7.2",
     "workerman/redis-queue": "^1.2",
-    "workerman/webman-framework": "^2.0 || dev-master",
     "webman/coroutine": "^1.0 || dev-main",
     "ext-redis": "*"
   },
