@@ -4,8 +4,7 @@
   "license": "MIT",
   "description": "Webman plugin thb/redis",
   "require": {
-    "php": ">=7.2",
-    "webman/event": "^1.0"
+    "php": ">=7.2"
   },
   "autoload": {
     "psr-4": {

@@ -17,6 +17,7 @@ namespace Thb\Redis;
 
 use RuntimeException;
 use support\Container;
+use support\exception\BusinessException;
 use Workerman\Timer;
 use Workerman\Redis\Client as Redis;
 use Psr\Log\LoggerInterface;
@@ -262,11 +263,19 @@ class RedisClient
                             $redisMidd->handle($package, function() use($callback, $package) {
                                 try {
                                     return \call_user_func($callback, $package['data']);
-                                } catch (\Throwable $exception) {
+                                } catch (BusinessException $exception) {
                                     return $exception;
+                                } catch (\Throwable $exception) {
+                                    $this->log((string)$exception);
+                                    $package['error'] = ['errMessage'=>$exception->getMessage(),'errCode'=>$exception->getCode(),'errFile'=>$exception->getFile(),'errLine'=>$exception->getLine()];
+                                    if (++$package['attempts'] > $package['max_attempts']) {
+                                        $this->fail($package);
+                                    } else {
+                                        $this->retry($package);
+                                    }
+                                    
                                 }
                             });
-                            
                         } catch (\Throwable $e) {
                             $this->log((string)$e);
                             $package['error'] = ['errMessage'=>$e->getMessage(),'errCode'=>$e->getCode(),'errFile'=>$e->getFile(),'errLine'=>$e->getLine()];
