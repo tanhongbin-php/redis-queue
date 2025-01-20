@@ -46,6 +46,9 @@ class Install
                     mkdir($parent_dir, 0777, true);
                 }
             }
+            if(file_exists(base_path()."/$dest")){
+                continue;
+            }
             //symlink(__DIR__ . "/$source", base_path()."/$dest");
             copy_dir(__DIR__ . "/$source", base_path()."/$dest");
         }
@@ -57,6 +60,7 @@ class Install
      */
     public static function uninstallByRelation()
     {
+        return true;
         foreach (static::$pathRelation as $source => $dest) {
             $path = base_path()."/$dest";
             if (!is_dir($path) && !is_file($path)) {
