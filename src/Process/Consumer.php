@@ -33,15 +33,17 @@ class Consumer
      * @var array
      */
     protected $_consumers = [];
+    protected $_middleware = [];
 
     /**
      * StompConsumer constructor.
      * @param string $consumer_dir
      */
-    public function __construct($consumer_dir = '')
+    public function __construct($consumer_dir = '', $middleware = [])
     {
         \support\Context::init();
         $this->_consumerDir = $consumer_dir;
+        $this->_middlewaresArr = $middleware;
     }
 
     /**
@@ -67,8 +69,7 @@ class Consumer
                 }
                 $connection = Client::connection($connection_name);
                 $middleware = config('plugin.thb.redis.redis.' . $connection_name . '.middleware', []);
-                $selfMiddleware = $consumer->middleware ?? [];
-                $middleware = array_merge($middleware, $selfMiddleware);
+                $middleware = array_merge($middleware, $this->_middlewaresArr);
                 $connection->middleware = $middleware;
                 $connection->subscribe($queue, [$consumer, 'consume']);
                 if (method_exists($connection, 'onConsumeFailure')) {

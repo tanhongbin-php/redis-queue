@@ -82,7 +82,7 @@ class RedisClient
 
     public $middleware = [];
 
-    public $middlewareArr = [];
+    protected $enable = false;
 
     /**
      * Client constructor.
@@ -248,16 +248,18 @@ class RedisClient
                         try {
                             // 使用示例
                             $redisMidd = Container::get('Thb\Redis\Redislication');
-
-                            foreach ($this->middleware as $middleware) {
-                                if(!class_exists($middleware)){
-                                    continue;
+                            if(!$this->enable){
+                                $this->enable = true;
+                                foreach ($this->middleware as $middleware) {
+                                    if(is_string($middleware) && !class_exists($middleware)){
+                                        continue;
+                                    }
+                                    if(is_string($middleware)){
+                                        $redisMidd->use(new $middleware); // 添加中间件
+                                    }else{
+                                        $redisMidd->use($middleware); // 添加中间件
+                                    }
                                 }
-                                if (isset($this->middlewaresArr[$middleware])) {
-                                    continue;
-                                }
-                                $this->middlewaresArr[$middleware] = $middleware; // 缓存中间件类实例，避免重复初始化
-                                $redisMidd->use(new $middleware); // 添加中间件
                             }
                             $package['max_attempts'] = $this->_options['max_attempts'];
                             $redisMidd->handle($package, function() use($callback, $package) {
