@@ -268,14 +268,13 @@ class RedisClient
                                 } catch (BusinessException $exception) {
                                     return $exception;
                                 } catch (\Throwable $exception) {
-                                    $this->log((string)$exception);
                                     $package['error'] = ['errMessage'=>$exception->getMessage(),'errCode'=>$exception->getCode(),'errFile'=>$exception->getFile(),'errLine'=>$exception->getLine()];
                                     if (++$package['attempts'] > $package['max_attempts']) {
                                         $this->fail($package);
                                     } else {
                                         $this->retry($package);
                                     }
-                                    
+                                    return $exception;
                                 }
                             });
                         } catch (\Throwable $e) {

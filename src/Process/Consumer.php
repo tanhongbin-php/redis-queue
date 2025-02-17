@@ -33,7 +33,7 @@ class Consumer
      * @var array
      */
     protected $_consumers = [];
-    protected $_middleware = [];
+    protected $_middlewaresArr = [];
 
     /**
      * StompConsumer constructor.
