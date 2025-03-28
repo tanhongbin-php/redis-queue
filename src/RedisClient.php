@@ -205,6 +205,9 @@ class RedisClient
                 if ($items === false) {
                     throw new RuntimeException($this->_redisSend->error());
                 }
+                if(is_null($items) || is_bool($items)){
+                    return;
+                }
                 foreach ($items as $package_str) {
                     $this->_redisSend->zRem($this->_options['prefix'] . static::QUEUE_DELAYED, $package_str, function ($result) use ($package_str) {
                         if ($result !== 1) {

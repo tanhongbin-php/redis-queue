@@ -29,10 +29,7 @@ class Consumer
      */
     protected $_consumerDir = '';
 
-    /**
-     * @var array
-     */
-    protected $_consumers = [];
+
     protected $_middlewaresArr = [];
 
     /**
