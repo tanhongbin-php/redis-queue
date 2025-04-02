@@ -78,7 +78,7 @@ class RedisConnection extends \Redis
      * @param $delay
      * @return bool
      */
-    public function send($queue, $data, $delay = 0)
+    public function send($queue, $data, $delay = 0, $source = '')
     {
         $queue_waiting = '{redis-queue}-waiting';
         $queue_delay = '{redis-queue}-delayed';
@@ -89,7 +89,8 @@ class RedisConnection extends \Redis
             'delay'    => $delay,
             'attempts' => 0,
             'queue'    => $queue,
-            'data'     => $data
+            'data'     => $data,
+            'source'   => $source,
         ]);
         if ($delay) {
             return (bool)$this->execCommand('zAdd' ,$queue_delay, $now + $delay, $package_str);
