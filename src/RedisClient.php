@@ -113,7 +113,7 @@ class RedisClient
      * @param int $delay
      * @param callable $cb
      */
-    public function send($queue, $data, $delay = 0, $cb = null)
+    public function send($queue, $data, $delay = 0, $cb = null, $source = '')
     {
         static $_id = 0;
         $id = \microtime(true) . '.' . (++$_id);
@@ -124,7 +124,8 @@ class RedisClient
             'delay'    => $delay,
             'attempts' => 0,
             'queue'    => $queue,
-            'data'     => $data
+            'data'     => $data,
+            'source'   => $source,
         ]);
         if (\is_callable($delay)) {
             $cb = $delay;
